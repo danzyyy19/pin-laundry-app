@@ -1,0 +1,78 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  address   String?
+  gender    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Kategori layanan utama: Kiloan, Bed Cover, Satuan, dll
+  serviceCategory String   @default("KILOAN")
+  // Jenis layanan spesifik, misal: "Cuci Setrika", "Express", dll
+  serviceType     String
+  weight          Float?
+  quantity        Int?
+  estimatedDays   Int
+  price           Float
+  otherCosts      Float    @default(0)
+  totalPrice      Float
+  paymentStatus   String   @default("BELUM_BAYAR")
+  orderStatus     String   @default("MENUNGGU_ANTRIAN")
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+}
+
+model Inventory {
+  id        String              @id @default(cuid())
+  code      String              @unique
+  name      String
+  unit      String
+  stock     Float
+  minStock  Float               @default(10)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  movements InventoryMovement[]
+}
+
+model InventoryMovement {
+  id          String    @id @default(cuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  type        String    // MASUK atau KELUAR
+  quantity    Float
+  // Stok setelah transaksi; default 0 untuk data lama
+  stockAfter  Float     @default(0)
+  notes       String?
+  createdAt   DateTime  @default(now())
+}
